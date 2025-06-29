@@ -15,5 +15,5 @@ def transcribe_audio():
 def show_routes():
     return jsonify([str(rule) for rule in app.url_map.iter_rules()])
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Do NOT add app.run() here.
+# Gunicorn will automatically use 'app' when you deploy on Render.
