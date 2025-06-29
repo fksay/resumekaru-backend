@@ -1,16 +1,21 @@
 from flask import Flask, request, jsonify
 import requests
-import os  # Import os for environment variables
+import os
 
 app = Flask(__name__)
 
-# Fetch API key securely from environment variable
+# Get OpenAI API key from environment variable
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+
+@app.route('/', methods=['GET'])
+def home():
+    return "ResumeKaruAI backend is running!", 200
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
+
     audio_file = request.files['file']
     files = {
         'file': (audio_file.filename, audio_file, audio_file.content_type)
@@ -36,3 +41,4 @@ def transcribe_audio():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
