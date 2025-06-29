@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
 import requests
+import os  # Import os for environment variables
 
 app = Flask(__name__)
 
-OPENAI_API_KEY = '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'
+# Fetch API key securely from environment variable
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
@@ -34,4 +36,3 @@ def transcribe_audio():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
