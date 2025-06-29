@@ -3,3 +3,4 @@ flask_cors
 openai
 requests
 openai-whisper
+gunicorn
