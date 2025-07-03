@@ -1,11 +1,12 @@
-from flask import Flask, request, jsonify
 import os
-import requests
+from flask import Flask, request, jsonify
+import openai
+import whisper
 
 app = Flask(__name__)
 
-# Load OpenAI API key from environment variable
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+# Securely load OpenAI API key from environment variable
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 @app.route('/')
 def home():
@@ -13,41 +14,39 @@ def home():
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
+    # 1. Check if file is in the request
     if 'file' not in request.files:
         return jsonify({'error': 'No file part. Use key "file" in form-data.'}), 400
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
-    # Save the uploaded file temporarily
+    # 2. Save the uploaded file
+    filepath = 'uploaded.wav'
     try:
-        filepath = 'uploaded.wav'
         file.save(filepath)
+        print(f"File {file.filename} uploaded and saved as {filepath}")
+    except Exception as e:
+        return jsonify({'error': f'File save failed: {str(e)}'}), 500
 
-        # Transcribe using OpenAI Whisper API
-        with open(filepath, 'rb') as audio_file:
-            response = requests.post(
-                "https://api.openai.com/v1/audio/transcriptions",
-                headers={
-                    "Authorization": f"Bearer {OPENAI_API_KEY}"
-                },
-                files={
-                    "file": (file.filename, audio_file, "audio/wav")
-                },
-                data={
-                    "model": "whisper-1"
-                }
+    # 3. Transcribe audio using Whisper
+    try:
+        # If using OpenAI Whisper API (recommended for prod, not local)
+        with open(filepath, "rb") as audio_file:
+            transcript = openai.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
             )
+        result = transcript.text if hasattr(transcript, "text") else str(transcript)
+        return jsonify({'transcript': result}), 200
 
-        if response.status_code == 200:
-            result = response.json()
-            transcript = result.get('text', '')
-            return jsonify({'transcript': transcript}), 200
-        else:
-            return jsonify({'error': response.text}), response.status_code
+        # # If using local whisper (if GPU available, UNCOMMENT & comment out above):
+        # model = whisper.load_model("base")
+        # result = model.transcribe(filepath)
+        # return jsonify({'transcript': result['text']}), 200
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Transcription failed: {str(e)}'}), 500
 
 @app.route('/routes')
 def show_routes():
@@ -57,4 +56,4 @@ def show_routes():
 def healthz():
     return 'ok', 200
 
-# Do NOT add: if __name__ == "__main__": ... etc. Render runs gunicorn.
+# Do NOT add if __name__ == "__main__": ... Render uses gunicorn
