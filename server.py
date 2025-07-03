@@ -24,21 +24,25 @@ def transcribe_audio():
     # Load OpenAI key from environment variable
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if not openai_api_key:
+        print("Error: OpenAI API key not set in environment variables.")
         return jsonify({'error': 'OpenAI API key not set in environment variables.'}), 500
 
     # Transcribe using OpenAI Whisper API
     try:
         with open(filename, "rb") as audio_file:
+            # Modern openai v1 syntax
             transcript = openai.audio.transcriptions.create(
                 api_key=openai_api_key,
                 model="whisper-1",
                 file=audio_file
             )
+        print("Transcription successful:", transcript)
         return jsonify({
             'message': f'File {file.filename} uploaded and transcribed successfully!',
             'transcription': transcript.text
         }), 200
     except Exception as e:
+        print("Error in /transcribe:", str(e))
         return jsonify({'error': str(e)}), 500
 
 @app.route('/routes')
