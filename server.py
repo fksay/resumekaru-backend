@@ -8,17 +8,19 @@ def home():
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
-    # Check if 'file' is present in the form-data
+    # Check if 'file' is in the request (from form-data)
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request'}), 400
+        return jsonify({'error': 'No file part. Use key "file" in form-data.'}), 400
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
-    # You can save the file to disk (optional, for testing)
-    file.save('uploaded.wav')
-
-    return jsonify({'message': f'File {file.filename} uploaded successfully!'}), 200
+    # Save the uploaded file (overwrite if exists)
+    try:
+        file.save('uploaded.wav')
+        return jsonify({'message': f'File {file.filename} uploaded successfully!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/routes')
 def show_routes():
@@ -28,4 +30,4 @@ def show_routes():
 def healthz():
     return 'ok', 200
 
-# Do NOT add app.run(); Gunicorn starts the app in production.
+# Do NOT add: if __name__ == "__main__": ... etc. Render runs gunicorn.
