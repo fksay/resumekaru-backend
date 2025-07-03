@@ -4,6 +4,9 @@ import openai
 
 app = Flask(__name__)
 
+# Set OpenAI API key globally from environment variable
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+
 @app.route('/')
 def home():
     return "ResumeKaruAI backend is running!"
@@ -16,25 +19,21 @@ def transcribe_audio():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
-    # Save the uploaded file
     filename = 'uploaded.wav'
     file.save(filename)
     print(f"File {file.filename} uploaded and saved as {filename}")
 
-    # Load OpenAI key from environment variable
-    openai_api_key = os.environ.get("OPENAI_API_KEY")
-    if not openai_api_key:
+    # Check if API key is set
+    if not openai.api_key:
         print("Error: OpenAI API key not set in environment variables.")
         return jsonify({'error': 'OpenAI API key not set in environment variables.'}), 500
 
     # Transcribe using OpenAI Whisper API
     try:
         with open(filename, "rb") as audio_file:
-            # Modern openai v1 syntax
             transcript = openai.audio.transcriptions.create(
-                api_key=openai_api_key,
-                model="whisper-1",
-                file=audio_file
+                file=audio_file,
+                model="whisper-1"
             )
         print("Transcription successful:", transcript)
         return jsonify({
