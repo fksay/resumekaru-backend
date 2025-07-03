@@ -8,8 +8,20 @@ def home():
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
-    data = request.get_json(force=True, silent=True)
-    return jsonify({"received": data}), 200
+    # Check if the request contains a file part
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    # (You can save the file or process with Whisper here)
+    # For now, just return the filename
+    return jsonify({
+        "filename": file.filename,
+        "message": "File received!"
+    }), 200
 
 @app.route('/routes')
 def show_routes():
@@ -19,4 +31,4 @@ def show_routes():
 def healthz():
     return 'ok', 200
 
-# DO NOT manually call app.run() when using gunicorn on Render
+# DO NOT manually call app.run() when using gunicorn/Render!
