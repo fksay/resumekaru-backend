@@ -8,8 +8,16 @@ def home():
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
-    # Just confirms POST is working; expand logic as needed.
-    return jsonify({"message": "Received"}), 200
+    # Check if 'file' is in the request (form-data)
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    # Save the uploaded file
+    file.save('uploaded.wav')
+    return jsonify({'message': f'File {file.filename} uploaded successfully!'}), 200
 
 @app.route('/routes')
 def show_routes():
@@ -19,7 +27,7 @@ def show_routes():
 def healthz():
     return 'ok', 200
 
-# DO NOT add: 
+# DO NOT add:
 # if __name__ == "__main__":
 #     app.run()
 # Gunicorn handles starting the app in Render.
