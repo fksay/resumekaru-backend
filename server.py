@@ -6,10 +6,18 @@ app = Flask(__name__)
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({'message': 'ResumeKaru backend is running!'})
+
 @app.route('/transcribe', methods=['POST'])
 def transcribe_audio():
+    if not OPENAI_API_KEY:
+        return jsonify({'error': 'OpenAI API key missing in environment variables'}), 500
+
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
+
     audio_file = request.files['file']
     files = {
         'file': (audio_file.filename, audio_file, audio_file.content_type)
@@ -31,7 +39,11 @@ def transcribe_audio():
         transcript = response.text
         return jsonify({'transcript': transcript})
     else:
-        return jsonify({'error': response.text}), response.status_code
+        try:
+            error = response.json()
+        except Exception:
+            error = response.text
+        return jsonify({'error': error}), response.status_code
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
